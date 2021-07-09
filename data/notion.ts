@@ -19,6 +19,7 @@ type Quote = {
   backgroundColor: string;
   textColor: string;
   attribution: string | null;
+  lastSeen: Date | null;
 };
 
 const makeQuotes = (quotes: Page[]): Quote[] => {
@@ -27,6 +28,7 @@ const makeQuotes = (quotes: Page[]): Quote[] => {
   for (const page of quotes) {
     const content = page.properties["Content"] as TitlePropertyValue;
     const attribution = page.properties["Attribution"] as RichTextPropertyValue;
+    const lastSeen = page.properties["Last Seen"] as DatePropertyValue;
     const [backgroundColor, textColor] = randomColor();
 
     if (content.title[0]) {
@@ -34,6 +36,7 @@ const makeQuotes = (quotes: Page[]): Quote[] => {
         id: page.id,
         content: content.title[0].plain_text,
         attribution: attribution.rich_text[0]?.plain_text || null,
+        lastSeen: lastSeen ? new Date(lastSeen.date.start) : null,
         backgroundColor,
         textColor,
       });
@@ -46,23 +49,34 @@ const makeQuotes = (quotes: Page[]): Quote[] => {
 export const getQuotes = async () => {
   const quotes = await notion.databases.query({
     database_id: DATABASE_ID,
-    page_size: 10,
-    sorts: [
-      {
-        property: "Last Seen",
-        direction: "ascending",
-      },
-    ],
   });
 
-  return makeQuotes(quotes.results);
+  return makeQuotes(quotes.results).sort((a, b) => {
+    if (!a.lastSeen && !b.lastSeen) {
+      return 0;
+    } else if (!a.lastSeen) {
+      return -1;
+    } else if (!b.lastSeen) {
+      return 1;
+    } else {
+      return 0;
+    }
+  });
 };
 
 export const getRandomQuote = async () => {
   const quotes = await getQuotes();
-  const rando = quotes[Math.floor(Math.random() * quotes.length)];
-  await updatePageLastSeen(rando.id);
-  return rando;
+
+  console.log(quotes);
+
+  let quoteToShow = quotes[0];
+
+  if (quotes[0].lastSeen) {
+    quoteToShow = quotes[Math.floor(Math.random() * quotes.length)];
+  }
+
+  await updatePageLastSeen(quoteToShow.id);
+  return quoteToShow;
 };
 
 type CreateQuote = {
