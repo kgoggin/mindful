@@ -29,7 +29,7 @@ const makeQuotes = (quotes: Page[]): Quote[] => {
       result.push({
         content: content.title[0].plain_text,
         backgroundColor: "#000000",
-        textColor: "#ffffff",
+        textColor: "#f1f1f1",
         attribution: "Someone Cool"
       })
     }
