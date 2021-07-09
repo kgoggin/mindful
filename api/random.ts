@@ -1,7 +1,11 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import {getQuotes} from "../data/notion";
+import { VercelRequest, VercelResponse } from "@vercel/node";
+import { getRandomQuote } from "../data/notion";
 
-export default async (_req: VercelRequest, res: VercelResponse) => {
-  const quotes = await getQuotes();
-  res.status(200).send(quotes[0]);
+export default async (req: VercelRequest, res: VercelResponse) => {
+  if (req.headers.authorization !== process.env.AUTH_TOKEN) {
+    res.status(403).send({});
+  }
+
+  const quote = await getRandomQuote();
+  res.status(200).send(quote);
 };
